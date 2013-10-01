@@ -1,10 +1,10 @@
 {
-    "name": "File explorer",
+    "name": "File Explorer",
     "description": "This app allows you to check your sd card!",
     "launch_path": "/index.html",
     "developer": {
         "name": "Ivan Lopez",
-        "url": "http://www.google.es"
+        "url": "https://github.com/ils219"
     },
     "permissions": {
         "device-storage:sdcard":{ "access": "readonly" }
