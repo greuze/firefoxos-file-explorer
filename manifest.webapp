@@ -1,0 +1,21 @@
+{
+    "name": "File explorer",
+    "description": "This app allows you to check your sd card!",
+    "launch_path": "/index.html",
+    "developer": {
+        "name": "Ivan Lopez",
+        "url": "http://www.google.es"
+    },
+    "permissions": {
+        "device-storage:sdcard":{ "access": "readonly" }
+    },
+    "icons": {
+        "16": "/img/icon16.png",
+        "32": "/img/icon32.png",
+        "48": "/img/icon48.png",
+        "64": "/img/icon64.png",
+        "128": "/img/icon128.png"
+    },
+    "default_locale": "en",
+    "type": "privileged"
+}
