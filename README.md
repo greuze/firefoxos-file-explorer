@@ -1,4 +1,6 @@
-firefoxos-file-explorer
+FirefoxOS File Explorer
 =======================
 
-File Explorer for FirefoxOS devices
+This is an open source file explorer, for FirefoxOS devices.
+
+Any developer interested in contributing, please, send me an e-mail to ils@tid.es
