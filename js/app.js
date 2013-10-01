@@ -1,22 +1,28 @@
 $(function() {
-    $("#get-battery").click(function() {
-    	var sdcard = navigator.getDeviceStorage('sdcard');
+    function getUsedSpace(container) {
+        var sdcard = navigator.getDeviceStorage('sdcard');
 
-		var request = sdcard.usedSpace();
+        var request = sdcard.usedSpace();
 
-		request.onsuccess = function () {
-		  // The result is express in bytes, lets turn it into megabytes
-		  var size = this.result / 1000000;
+        request.onsuccess = function () {
 
-          $("#battery-pct").text(Math.round(size));
+            // The result is expressed in bytes, lets turn it into megabytes
+            var size = request.result / 1048576;
 
-		  console.log("The videos on your device use a total of " + size.toFixed(2) + "Mo of space.");
-		}
+            var message = "(" + Math.round(size) + " MB used)";
 
-		request.onerror = function () {
-          $("#battery-pct").text('Error');
+            $(container).text(message);
 
-		  console.warn("Unable to get the space used by videos: " + this.error);
-		}
-    });
+            console.log("The space used is " + size.toFixed(2) + "MB.");
+        };
+
+        request.onerror = function () {
+
+            $(container).text('Error');
+
+            console.warn("Unable to get the used space: " + this.error);
+        };
+    }
+
+    getUsedSpace("#header-info");
 });
