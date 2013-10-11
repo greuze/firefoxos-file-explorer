@@ -58,21 +58,21 @@ function getDirectoryContents(root, next) {
 
 function printDirectoryContents(containerId, contents) {
     var container = $('#' + containerId);
-    container.text(contents); // NICE: Better way to delete element
+    container.text(''); // NICE: Better way to delete element
 
-//    var li = document.createElement('li');
-//    container.appendChild(li);
-//
-//    var a = document.createElement('a');
-//    li.appendChild(a);
-//
-//    var p1 = document.createElement('p');
-//    var text1 = document.createTextNode('aaa.xxx');
-//    p1.appendChild(text1);
-//    a.appendChild(p1);
-//
-//    var p2 = document.createElement('p');
-//    var text2 = document.createTextNode('xxx file');
-//    p2.appendChild(text2);
-//    a.appendChild(p2);
+    for (var i in contents) {
+        container.append(
+            $(document.createElement('li')).append(
+                $(document.createElement('a')).append(
+                        $(document.createElement('p')).append(
+                            $(document.createTextNode(contents[i].name))
+                        )
+                    ).append(
+                        $(document.createElement('p')).append(
+                            $(document.createTextNode('file'))
+                        )
+                    )
+            )
+        );
+    }
 }
