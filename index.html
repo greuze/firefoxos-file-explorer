@@ -10,12 +10,20 @@
 
         <script src="js/jquery-1.10.2.min.js"></script>
         <script src="js/app.js"></script>
+        <script type="text/javascript">
+            $(function() {
+//                getUsedSpace("header-info");
+                getDirectoryContents("/", function(contents) {
+                    printDirectoryContents("content-list", contents);
+                });
+            });
+        </script>
     </head>
     <body>
         <section data-type="list">
             <!-- TODO: Generate this list dynamically (with a mock at the beginning) -->
             <header>Root folder <span id="header-info"></span></header>
-            <ul>
+            <ul id="content-list">
                 <li>
                     <a href="#">
                         <p>new dir</p>
