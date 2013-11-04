@@ -19,21 +19,32 @@ function getUsedSpace(containerId) {
 }
 
 function getDirectoryContents(root, next) {
-    next(
-        [
-            {'name': 'new Dir'},
-            {'name': 'File_with_no_icon.xxx'},
-            {'name': 'My Document.doc'},
-            {'name': 'My text file.txt'},
-            {'name': 'My text file2.txt'},
-            {'name': 'My text file3.txt'},
-            {'name': 'My Document2.doc'},
-            {'name': 'My Document.pdf'},
-            {'name': 'My text file4.txt'},
-            {'name': 'My text file5.txt'},
-            {'name': 'My text file6.txt'}
-        ]
-    );
+    if (root === '/' || root === '..') {
+        next(
+            [
+                {'name': 'new Dir'},
+                {'name': 'File_with_no_icon.xxx'},
+                {'name': 'My Document.doc'},
+                {'name': 'My text file.txt'},
+                {'name': 'My text file2.txt'},
+                {'name': 'My text file3.txt'},
+                {'name': 'My Document2.doc'},
+                {'name': 'My Document.pdf'},
+                {'name': 'My text file4.txt'},
+                {'name': 'My text file5.txt'},
+                {'name': 'My text file6.txt'}
+            ]
+        );
+    } else {
+        next(
+            [
+                {'name': '..'},
+                {'name': 'My picture.jpg'},
+                {'name': 'My picture2.jpg'},
+                {'name': 'My picture3.jpg'}
+            ]
+        );
+    }
 
 //    var sdcard = navigator.getDeviceStorage('sdcard');
 //
@@ -63,19 +74,19 @@ function printDirectoryContents(containerId, contents) {
     container.text(''); // NICE: Better way to delete element
 
     for (var i in contents) {
-        printDirectoryElement(container, contents[i]);
+        _printDirectoryElement(container, contents[i]);
     }
 }
 
-function printDirectoryElement(container, element) {
+function _printDirectoryElement(container, element) {
     var a =
-        $('<a>').append(
+        $('<a>',{href: "javascript:openElement('" + element.name + "');"}).append(
             $('<p>', {text: element.name})
         ).append(
-            $('<p>', {text: printFileType(element)})
+            $('<p>', {text: _printFileType(element)})
         );
     var li = $('<li>');
-    var icon = printIcon(element);
+    var icon = _printIcon(element);
     if (icon) {
         li.append(icon);
     }
@@ -83,8 +94,8 @@ function printDirectoryElement(container, element) {
     container.append(li);
 }
 
-function printIcon(file) {
-    var fileExtension = getFileExtension(file.name);
+function _printIcon(file) {
+    var fileExtension = _getFileExtension(file.name);
     switch (fileExtension) {
         case 'doc':
         case 'pdf':
@@ -96,8 +107,8 @@ function printIcon(file) {
     }
 }
 
-function printFileType(file) {
-    switch(getFileExtension(file.name)) {
+function _printFileType(file) {
+    switch(_getFileExtension(file.name)) {
         case 'doc':
             return 'Word document';
         case 'pdf':
@@ -107,6 +118,21 @@ function printFileType(file) {
     }
 }
 
-function getFileExtension(filename) {
+function _getFileExtension(filename) {
     return filename.substring(filename.lastIndexOf('.') + 1);
+}
+
+function _isDirectory(file) {
+    return file === '..' || file.lastIndexOf('.') === -1;
+}
+
+// TODO: Better effort
+function openElement(element) {
+    if (_isDirectory(element)) {
+        getDirectoryContents(element, function(contents) {
+            printDirectoryContents("content-list", contents);
+        });
+    } else {
+        alert('Clicked file ' + element);
+    }
 }

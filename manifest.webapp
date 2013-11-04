@@ -1,5 +1,5 @@
 {
-    "name": "File Explorer",
+    "name": "SD Explorer",
     "description": "This app allows you to check your sd card!",
     "launch_path": "/index.html",
     "developer": {
@@ -7,14 +7,13 @@
         "url": "https://github.com/ils219"
     },
     "permissions": {
-        "device-storage:sdcard":{ "access": "readonly" }
+        "device-storage:sdcard": {
+            "description": "To read the SD card file system",
+            "access": "readonly"
+        }
     },
     "icons": {
-        "16": "/img/icon16.png",
-        "32": "/img/icon32.png",
-        "48": "/img/icon48.png",
-        "64": "/img/icon64.png",
-        "128": "/img/icon128.png"
+        "60": "/icons/icon_60.png"
     },
     "default_locale": "en",
     "type": "privileged"
