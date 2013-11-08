@@ -1,20 +1,20 @@
 {
-    "name": "SD Explorer",
-    "description": "This app allows you to check your sd card!",
-    "launch_path": "/index.html",
-    "developer": {
-        "name": "Ivan Lopez",
-        "url": "https://github.com/ils219"
-    },
-    "permissions": {
-        "device-storage:sdcard": {
-            "description": "To read the SD card file system",
-            "access": "readonly"
-        }
-    },
-    "icons": {
-        "60": "/icons/icon_60.png"
-    },
-    "default_locale": "en",
-    "type": "privileged"
+  "name": "SD Explorer",
+  "description": "This app allows you to check your sd card!",
+  "launch_path": "/index.html",
+  "developer": {
+    "name": "Ivan Lopez",
+    "url": "https://github.com/ils219"
+  },
+  "permissions": {
+    "device-storage:sdcard": {
+      "description": "To read the SD card file system",
+      "access": "readonly"
+    }
+  },
+  "icons": {
+    "60": "/icons/icon_60.png"
+  },
+  "default_locale": "en",
+  "type": "privileged"
 }

@@ -19,6 +19,26 @@ function getUsedSpace(containerId) {
 }
 
 function getDirectoryContents(root, next) {
+    var sdcard = navigator.getDeviceStorage('sdcard');
+
+    // Let's retrieve files from last week.
+    var param = {
+        since: new Date((+new Date()) - 7*365*24*60*60*1000)
+    };
+
+    var cursor = sdcard.enumerate(param);
+
+    cursor.onsuccess = function () {
+        // Once we found a file we check if there are other results
+        // Then we move to the next result, which calls the cursor
+        // success possibly with the next file as result.
+        if (!this.done) {
+            var file = this.result;
+            console.log("File found: " + file.name);
+            this.continue();
+        }
+    };
+
     if (root === '/' || root === '..') {
         next(
             [
@@ -45,28 +65,6 @@ function getDirectoryContents(root, next) {
             ]
         );
     }
-
-//    var sdcard = navigator.getDeviceStorage('sdcard');
-//
-//// Let's retrieve files from last week.
-//    var param = {
-//        since: new Date((+new Date()) - 7*24*60*60*1000)
-//    }
-//
-//    var cursor = sdcard.enumerate(param);
-//
-//    cursor.onsuccess = function () {
-//
-//        if (!this.result) {
-//            var file = this.result;
-//            console.log("File updated on: " + file.lastModifiedDate);
-//
-//            // Once we found a file we check if there are other results
-//            // Then we move to the next result, which calls the cursor
-//            // success possibly with the next file as result.
-//            this.continue();
-//        }
-//    }
 }
 
 function printDirectoryContents(containerId, contents) {
