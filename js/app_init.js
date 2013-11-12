@@ -1,6 +1,4 @@
-$(function() {
-    getUsedSpace("header-info");
-    getDirectoryContents("/", function(contents) {
-        printDirectoryContents("content-list", contents);
-    });
-});
+'use strict';
+
+app.getUsedSpace("header-info");
+app.printDirectory("/", "content-list");
