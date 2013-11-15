@@ -9,6 +9,7 @@
         <!-- Building blocks -->
         <link href="css/headers.css" rel="stylesheet" type="text/css">
         <link href="css/lists.css" rel="stylesheet" type="text/css">
+        <link href="css/action_menu.css" rel="stylesheet" type="text/css">
 
         <script defer src="js/jquery-1.10.2.min.js"></script>
         <script defer src="js/app.js"></script>
@@ -28,36 +29,17 @@
         <section data-type="list">
             <!-- TODO: Generate this list dynamically (with a mock at the beginning) -->
             <header>Root folder <span id="header-info"></span></header>
-            <ul id="content-list">
-                <li>
-                    <a href="#">
-                        <p>new dir</p>
-                        <p>Folder</p>
-                    </a>
-                </li>
-                <li>
-                    <p>File_with_no_icon.xxx</p>
-                    <p>XXX file</p>
-                </li>
-                <li>
-                    <aside class="pack-end">
-                        <img alt="placeholder" src="img/pdf_16.png">
-                    </aside>
-                    <a href="#">
-                        <p>My document.pdf</p>
-                        <p>PDF file</p>
-                    </a>
-                </li>
-                <li>
-                    <aside class="pack-end">
-                        <img alt="placeholder" src="img/doc_16.png">
-                    </aside>
-                    <a href="#">
-                        <p>My document.doc</p>
-                        <p>Microsoft Word file</p>
-                    </a>
-                </li>
-            </ul>
+            <ul id="content-list"></ul>
         </section>
+
+        <form id="action-form" role="dialog" data-type="action" onsubmit="return false;">
+            <header id="action-header"></header>
+            <menu type="toolbar">
+                <button id="open" disabled>Open</button>
+                <button id="share">Share</button>
+                <button id="delete">Delete</button>
+                <button id="cancel">Cancel</button>
+            </menu>
+        </form>
     </body>
 </html>

@@ -12,3 +12,7 @@ html, body {
 #content-list > li > a * {
     pointer-events: none;
 }
+
+form {
+    display: none;
+}
