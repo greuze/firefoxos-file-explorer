@@ -2,6 +2,24 @@
 
 var app = (function() {
 
+    function init(containerId) {
+        var contentList = document.getElementById(containerId);
+        contentList.addEventListener('click', _listHandler);
+    }
+
+    function _listHandler(e) {
+        alert('Hola');
+        var target = e.target;
+
+        var liElement = target.parentNode;
+        if (liElement) {
+            var id = liElement.dataset.id;
+            if (id) {
+                alert('Se le dio en ' + id);
+            }
+        }
+    }
+
     function getUsedSpace(containerId) {
         var sdcard = navigator.getDeviceStorage('sdcard');
 
@@ -10,7 +28,7 @@ var app = (function() {
         request.onsuccess = function () {
             // The result is expressed in bytes, lets turn it into megabytes
             var size = request.result / 1048576;
-            var message = "(" + Math.round(size) + " MB used)";
+            var message = "(" + size.toFixed(2) + " MB used)";
 
             $('#' + containerId).text(message);
             console.log("The space used is " + size.toFixed(2) + "MB.");
@@ -28,7 +46,7 @@ var app = (function() {
         container.text(''); // NICE: Better way to delete element
 
         var sdcard = navigator.getDeviceStorage('sdcard');
-        var cursor = sdcard.enumerate();
+        var cursor = sdcard.enumerate(root);
 
         cursor.onsuccess = function () {
             // Once we found a file we check if there are other results
@@ -36,7 +54,7 @@ var app = (function() {
             // success possibly with the next file as result.
             if (!this.done) {
                 var file = this.result;
-                console.log("File " + file.name + " last modified " + file.lastModifiedDate);
+                console.log("File %s of type '%s' was last modified on %s", file.name, file.type, file.lastModifiedDateDate);
 
                 _printDirectoryElement(container, file);
 
@@ -52,12 +70,12 @@ var app = (function() {
 
     function _printDirectoryElement(container, element) {
         var a =
-            $('<a>',{href: "javascript:openElement('" + element.name + "');"}).append(
+            $('<a>',{href: '#'}).append(
                     $('<p>', {text: element.name})
                 ).append(
                     $('<p>', {text: _printFileType(element)})
                 );
-        var li = $('<li>');
+        var li = $('<li>', {'data-id': element.name});
         var icon = _printIcon(element);
         if (icon) {
             li.append(icon);
@@ -110,6 +128,7 @@ var app = (function() {
     }
 
     return {
+        init: init,
         getUsedSpace: getUsedSpace,
         printDirectory: printDirectory
     }
