@@ -8,8 +8,8 @@
   },
   "permissions": {
     "device-storage:sdcard": {
-      "description": "To read the SD card file system",
-      "access": "readonly"
+      "description": "To read and write in the SD card file system",
+      "access": "readwrite"
     }
   },
   "icons": {
