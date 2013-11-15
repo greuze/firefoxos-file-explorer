@@ -8,3 +8,11 @@ html, body {
     font-size: 10px;
     background-color: #FFFFFF;
 }
+
+#content-list > li > a * {
+    pointer-events: none;
+}
+
+form {
+    display: none;
+}

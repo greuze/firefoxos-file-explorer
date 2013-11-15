@@ -8,12 +8,14 @@
   },
   "permissions": {
     "device-storage:sdcard": {
-      "description": "To read the SD card file system",
-      "access": "readonly"
+      "description": "To read and write in the SD card file system",
+      "access": "readwrite"
     }
   },
   "icons": {
-    "60": "/icons/icon_60.png"
+    "32": "/icons/icon_32.png",
+    "60": "/icons/icon_60.png",
+    "128": "/icons/icon_128.png"
   },
   "default_locale": "en",
   "type": "privileged"
