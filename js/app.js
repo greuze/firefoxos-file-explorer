@@ -10,16 +10,59 @@ var app = (function() {
     var HEADER_INFO_ID = 'header-info';
     var ACTION_HEADER_ID = 'action-header';
     var ACTION_FORM_ID = 'action-form';
+    var MENU_ID = 'menu';
+    var STORAGE_FORM_ID = 'storage-form';
+    var STORAGE_MENU_ID = 'storage-menu';
 
-    var sdcard;
+    var availableStorages;
+    var currentStorage;
     var currentDir;
     var currentFile;
 
     function init() {
-        sdcard = navigator.getDeviceStorage('sdcard');
+        availableStorages = navigator.getDeviceStorages('sdcard');
+        currentStorage = availableStorages[0];
 
         var contentList = document.getElementById(CONTENT_LIST_ID);
         contentList.addEventListener('click', _listHandler);
+
+        var menuButton = document.getElementById(MENU_ID);
+        menuButton.addEventListener('click', _menuHandler);
+
+        var returnFalse = function() {
+            return false;
+        };
+
+        document.getElementById(ACTION_FORM_ID).onsubmit = returnFalse;
+        document.getElementById(STORAGE_FORM_ID).onsubmit = returnFalse;
+    }
+
+    function _menuHandler(e) {
+        // Loop through every device storage
+        var menu = $('#' + STORAGE_MENU_ID);
+        menu.text('');
+        for (var i = 0; i < availableStorages.length; i++) {
+            var element =
+                $('<button>', {'data-id': availableStorages[i].storageName, text: availableStorages[i].storageName});
+            menu.append(element);
+        }
+        var cancelElement = $('<button>', {text: 'Cancel'});
+        menu.append(cancelElement);
+        $('#' + STORAGE_FORM_ID).on('click', _selectStorage).show();
+    }
+
+    function _selectStorage(e) {
+        $('#' + STORAGE_FORM_ID).unbind('click').hide();
+        var targetId = e.target.dataset.id;
+        if (targetId) {
+            for (var i = 0; i < availableStorages.length; i++) {
+                if (targetId === availableStorages[i].storageName) {
+                    currentStorage = availableStorages[i];
+                    printDirectory("");
+                    break;
+                }
+            }
+        }
     }
 
     function _listHandler(e) {
@@ -46,7 +89,7 @@ var app = (function() {
         if (targetNode === 'button') {
             switch(e.target.id) {
                 case 'open':
-                    alert('Not yet implemented');
+                    _openFile(currentFile);
                     break;
                 case 'share':
                     _shareFile(currentFile);
@@ -60,9 +103,39 @@ var app = (function() {
         }
     }
 
+    function _openFile(fileName) {
+        console.log('Will try to open %s', fileName);
+        var request = currentStorage.get(fileName);
+
+        request.onsuccess = function () {
+            var file = this.result;
+
+            var activity = new MozActivity({
+                name: 'open',
+                data: {
+                    type: file.type,
+                    blob: file,
+                    filename: file.name
+                }
+            });
+
+            activity.onsuccess = function() {
+                console.log('File %s successfully opened', file.name);
+            };
+
+            activity.onerror = function() {
+                console.error('Unable to open the file: ', this.error);
+            };
+        };
+
+        request.onerror = function () {
+            console.error('Unable to get the file: ', this.error);
+        };
+    }
+
     function _shareFile(fileName) {
         console.log('Will try to share %s', fileName);
-        var request = sdcard.get(fileName);
+        var request = currentStorage.get(fileName);
 
         request.onsuccess = function () {
             var file = this.result;
@@ -91,7 +164,7 @@ var app = (function() {
 
     function _deleteFile(fileName) {
         console.log('Will try to delete %s', fileName);
-        var request = sdcard.delete(fileName);
+        var request = currentStorage.delete(fileName);
 
         request.onsuccess = function () {
             console.log('File %s successfully deleted', fileName);
@@ -105,7 +178,7 @@ var app = (function() {
     }
 
     function getUsedSpace() {
-        var request = sdcard.usedSpace();
+        var request = currentStorage.usedSpace();
 
         request.onsuccess = function () {
             // The result is expressed in bytes, lets turn it into _MEGABYTEs
@@ -123,12 +196,14 @@ var app = (function() {
     }
 
     function printDirectory(root) {
-
         var container = $('#' + CONTENT_LIST_ID);
         container.text(''); // NICE: Better way to delete element
 
-        var currentDir = root;
-        var cursor = sdcard.enumerate(currentDir);
+        currentDir = root;
+
+        console.log("Will print directory '%s' from storage '%s'", root, currentStorage.storageName);
+
+        var cursor = currentStorage.enumerate(currentDir);
 
         cursor.onsuccess = function () {
             // Once we found a file we check if there are other results

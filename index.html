@@ -18,7 +18,7 @@
     <body role="application">
         <section role="region">
             <header>
-                <button><span class="icon icon-menu">menu</span></button>
+                <button id="menu"><span class="icon icon-menu">menu</span></button>
                 <menu type="toolbar">
                     <a href="#"><span class="icon icon-add">add</span></a>
                 </menu>
@@ -32,13 +32,20 @@
             <ul id="content-list"></ul>
         </section>
 
-        <form id="action-form" role="dialog" data-type="action" onsubmit="return false;">
+        <form id="action-form" role="dialog" data-type="action">
             <header id="action-header"></header>
             <menu type="toolbar">
-                <button id="open" disabled>Open</button>
+                <button id="open">Open</button>
                 <button id="share">Share</button>
                 <button id="delete">Delete</button>
                 <button id="cancel">Cancel</button>
+            </menu>
+        </form>
+
+        <form id="storage-form" role="dialog" data-type="action">
+            <header id="storage-header"></header>
+            <menu id="storage-menu" type="toolbar">
+                <button>Cancel</button>
             </menu>
         </form>
     </body>
