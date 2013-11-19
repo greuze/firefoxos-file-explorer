@@ -107,6 +107,8 @@ var app = (function() {
         console.log('Will try to open %s', fileName);
         var request = currentStorage.get(fileName);
 
+        // TODO: Message for unimplemented formats
+
         request.onsuccess = function () {
             var file = this.result;
 
@@ -259,9 +261,11 @@ var app = (function() {
     }
 
     function _printFileType(file) {
+        if (file.type) {
+            return file.type;
+        }
+
         switch(_getFileExtension(file.name)) {
-            case 'txt':
-                return 'Text document';
             case 'doc':
                 return 'Word document';
             case 'pdf':
