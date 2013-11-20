@@ -19,6 +19,7 @@ var app = (function() {
     var currentDir;
     var currentFile;
 
+    // Initialize application, executen only once
     function init() {
         availableStorages = navigator.getDeviceStorages('sdcard');
         currentStorage = availableStorages[0];
@@ -37,6 +38,7 @@ var app = (function() {
         document.getElementById(STORAGE_FORM_ID).onsubmit = returnFalse;
     }
 
+    // Handle main menu (in the top right corner) events
     function _menuHandler(e) {
         // Loop through every device storage
         var menu = $('#' + STORAGE_MENU_ID);
@@ -58,13 +60,14 @@ var app = (function() {
             for (var i = 0; i < availableStorages.length; i++) {
                 if (targetId === availableStorages[i].storageName) {
                     currentStorage = availableStorages[i];
-                    printDirectory("");
+                    printDirectoryContent("");
                     break;
                 }
             }
         }
     }
 
+    // Handler for clicks on file list
     function _listHandler(e) {
         var target = e.target;
 
@@ -72,7 +75,11 @@ var app = (function() {
         if (liElement) {
             var id = liElement.dataset.id;
             if (id) {
-                _selectAction(id);
+                if (liElement.dataset.type === 'folder') {
+                    printDirectoryContent(_getRelativePath(id, '/' + currentStorage.storageName + '/'));
+                } else {
+                    _selectAction(id);
+                }
             }
         }
     }
@@ -170,7 +177,7 @@ var app = (function() {
 
         request.onsuccess = function () {
             console.log('File %s successfully deleted', fileName);
-            printDirectory(currentDir);
+            printDirectoryContent(currentDir);
         };
 
         request.onerror = function () {
@@ -183,7 +190,7 @@ var app = (function() {
         var request = currentStorage.usedSpace();
 
         request.onsuccess = function () {
-            // The result is expressed in bytes, lets turn it into _MEGABYTEs
+            // The result is expressed in bytes, lets turn it into megabytes
             var size = _printFileSize(request.result);
             var message = '(' + size + ' used)';
 
@@ -197,15 +204,25 @@ var app = (function() {
         };
     }
 
-    function printDirectory(root) {
+    function printDirectoryContent(root) {
         var container = $('#' + CONTENT_LIST_ID);
         container.text(''); // NICE: Better way to delete element
 
         currentDir = root;
+        var currentPath = '/' + currentStorage.storageName + '/' + (root == '' ? '' : root + '/');
+        var parentPath = _getParentFolder(currentPath);
 
         console.log("Will print directory '%s' from storage '%s'", root, currentStorage.storageName);
+        console.log("Will filter everything out '%s'", currentPath);
+        console.log("Parent folder is '%s'", parentPath);
 
         var cursor = currentStorage.enumerate(currentDir);
+
+        var directoriesList = [];
+
+        if (root !== '') {
+            _printDirectory(container, parentPath);
+        }
 
         cursor.onsuccess = function () {
             // Once we found a file we check if there are other results
@@ -213,9 +230,30 @@ var app = (function() {
             // success possibly with the next file as result.
             if (!this.done) {
                 var file = this.result;
-                console.log("Found file %s of type '%s'", file.name, file.type);
+                var relativeFileName = _getRelativePath(file.name, currentPath);
 
-                _printDirectoryElement(container, file);
+                console.log("Found file %s of type '%s'", relativeFileName, file.type);
+
+                // Check is the file is in selected folder
+                if (_isInCurrentDirectory(relativeFileName)) {
+                    //Check if the directory has been already printed
+                    var containingFolder = _getFolderPath(file.name);
+                    if (directoriesList.indexOf(containingFolder) === -1) {
+                        _printDirectory(container, containingFolder);
+                        directoriesList.push(containingFolder);
+                    }
+
+                    _printFile(container, file);
+                }
+                // Check if file is in a folder that is in selected one
+                else if (_isInCurrentDirectory(_getFolderPath(relativeFileName))) {
+                    //Check if the directory has been already printed
+                    var containingFolder = _getFolderPath(file.name);
+                    if (directoriesList.indexOf(containingFolder) === -1) {
+                        _printDirectory(container, containingFolder);
+                        directoriesList.push(containingFolder);
+                    }
+                }
 
                 this.continue();
             }
@@ -227,15 +265,35 @@ var app = (function() {
         };
     }
 
-    function _printDirectoryElement(container, element) {
+    function _printDirectory(container, directoryName) {
         var a =
             $('<a>',{href: '#'}).append(
-                    $('<p>', {text: element.name})
+                    $('<p>', {text: directoryName})
                 ).append(
-                    $('<p>', {text: _printFileDescription(element)})
+                    $('<p>', {text: 'Directory'})
                 );
-        var li = $('<li>', {'data-id': element.name});
-        var icon = _printIcon(element);
+        var li = $('<li>', {'data-id': directoryName, 'data-type': 'folder'});
+//        var icon = _printIcon(element);
+//        if (icon) {
+//            li.append(icon);
+//        }
+        li.append(a);
+        container.append(li);
+    }
+
+    function _printFileLater(container, file) {
+        window.setTimeout(function() {_printFile(container, file)}, 0);
+    }
+
+    function _printFile(container, file) {
+        var a =
+            $('<a>',{href: '#'}).append(
+                    $('<p>', {text: file.name})
+                ).append(
+                    $('<p>', {text: _printFileDescription(file)})
+                );
+        var li = $('<li>', {'data-id': file.name, 'data-type': 'file'});
+        var icon = _printIcon(file);
         if (icon) {
             li.append(icon);
         }
@@ -291,9 +349,38 @@ var app = (function() {
         return filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
     }
 
+    function _getParentFolder(fullName) {
+        if (fullName == '') {
+            return null;
+        }
+        var lastSlash = fullName.lastIndexOf('/');
+        // Should not happen, would mean a path without slashes
+        if (lastSlash === -1) {
+            return '';
+        }
+        // If the slash is trailing
+        if (lastSlash == fullName.length - 1) {
+            lastSlash = fullName.substring(0, fullName.length - 1).lastIndexOf('/');
+        }
+        return fullName.substring(0, lastSlash + 1);
+    }
+
+    // Precondition: the fullName will always be relative to relativeTo
+    function _getRelativePath(fullName, relativeTo) {
+        return fullName.substring(fullName.indexOf(relativeTo) + relativeTo.length);
+    }
+
+    function _isInCurrentDirectory(relativeName) {
+        return relativeName.lastIndexOf('/') === -1;
+    }
+
+    function _getFolderPath(fullName) {
+        return fullName.substring(0, fullName.lastIndexOf('/'));
+    }
+
     return {
         init: init,
         getUsedSpace: getUsedSpace,
-        printDirectory: printDirectory
+        printDirectory: printDirectoryContent
     }
 })();
