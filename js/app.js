@@ -209,19 +209,19 @@ var app = (function() {
         container.text(''); // NICE: Better way to delete element
 
         currentDir = root;
-        var currentPath = '/' + currentStorage.storageName + '/' + (root == '' ? '' : root + '/');
-        var parentPath = _getParentFolder(currentPath);
+        var currentPath = '/' + currentStorage.storageName + (root == '' ? '' : '/' + root);
 
-        console.log("Will print directory '%s' from storage '%s'", root, currentStorage.storageName);
+        console.log("Will print folder '%s' from storage '%s'", root, currentStorage.storageName);
         console.log("Will filter everything out '%s'", currentPath);
-        console.log("Parent folder is '%s'", parentPath);
 
         var cursor = currentStorage.enumerate(currentDir);
 
-        var directoriesList = [];
+        var directoriesList = [currentPath];
 
         if (root !== '') {
-            _printDirectory(container, parentPath);
+            var parentPath = _getParentFolder(currentPath);
+            console.log("Parent folder is '%s'", parentPath);
+            _printDirectory(container, parentPath, 'Parent folder');
         }
 
         cursor.onsuccess = function () {
@@ -232,26 +232,19 @@ var app = (function() {
                 var file = this.result;
                 var relativeFileName = _getRelativePath(file.name, currentPath);
 
-                console.log("Found file %s of type '%s'", relativeFileName, file.type);
+                console.log("Found file %s of type '%s'", file.name, file.type);
 
-                // Check is the file is in selected folder
+                // Check if the file is in current folder and print it
                 if (_isInCurrentDirectory(relativeFileName)) {
-                    //Check if the directory has been already printed
-                    var containingFolder = _getFolderPath(file.name);
-                    if (directoriesList.indexOf(containingFolder) === -1) {
-                        _printDirectory(container, containingFolder);
-                        directoriesList.push(containingFolder);
-                    }
-
                     _printFile(container, file);
                 }
-                // Check if file is in a folder that is in selected one
-                else if (_isInCurrentDirectory(_getFolderPath(relativeFileName))) {
-                    //Check if the directory has been already printed
-                    var containingFolder = _getFolderPath(file.name);
-                    if (directoriesList.indexOf(containingFolder) === -1) {
-                        _printDirectory(container, containingFolder);
-                        directoriesList.push(containingFolder);
+                // Check if the relative root of the file has been already printed
+                else if (_getRelativeRoot(relativeFileName)) {
+                    //Check if the folder has been already printed
+                    var relativeRootPath = currentPath + '/' + _getRelativeRoot(relativeFileName);
+                    if (directoriesList.indexOf(relativeRootPath) === -1) {
+                        _printDirectory(container, relativeRootPath);
+                        directoriesList.push(relativeRootPath);
                     }
                 }
 
@@ -260,17 +253,17 @@ var app = (function() {
         };
 
         cursor.onerror = function () {
-            $('#' + containerId).text('Error');
+            container.text('Error');
             console.warn('Unable to get sd card cursor: ' + this.error.name);
         };
     }
 
-    function _printDirectory(container, directoryName) {
+    function _printDirectory(container, directoryName, description) {
         var a =
             $('<a>',{href: '#'}).append(
-                    $('<p>', {text: directoryName})
+                    $('<p>', {text: directoryName + '/'})
                 ).append(
-                    $('<p>', {text: 'Directory'})
+                    $('<p>', {text: description || 'Folder'})
                 );
         var li = $('<li>', {'data-id': directoryName, 'data-type': 'folder'});
 //        var icon = _printIcon(element);
@@ -279,10 +272,6 @@ var app = (function() {
 //        }
         li.append(a);
         container.append(li);
-    }
-
-    function _printFileLater(container, file) {
-        window.setTimeout(function() {_printFile(container, file)}, 0);
     }
 
     function _printFile(container, file) {
@@ -362,12 +351,22 @@ var app = (function() {
         if (lastSlash == fullName.length - 1) {
             lastSlash = fullName.substring(0, fullName.length - 1).lastIndexOf('/');
         }
-        return fullName.substring(0, lastSlash + 1);
+        return fullName.substring(0, lastSlash);
     }
 
     // Precondition: the fullName will always be relative to relativeTo
     function _getRelativePath(fullName, relativeTo) {
-        return fullName.substring(fullName.indexOf(relativeTo) + relativeTo.length);
+        var relativePath = fullName.substring(fullName.indexOf(relativeTo) + relativeTo.length);
+        if (relativePath.indexOf('/') === 0) {
+            return relativePath.substring(1);
+        } else {
+            return relativePath;
+        }
+    }
+
+    // Precondition: the relative name cannot start by '/' and must have at least one parent folder
+    function _getRelativeRoot(relativeName) {
+        return relativeName.substring(0, relativeName.indexOf('/'));
     }
 
     function _isInCurrentDirectory(relativeName) {
