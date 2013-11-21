@@ -10,18 +10,64 @@ var app = (function() {
     var HEADER_INFO_ID = 'header-info';
     var ACTION_HEADER_ID = 'action-header';
     var ACTION_FORM_ID = 'action-form';
+    var MENU_ID = 'menu';
+    var STORAGE_FORM_ID = 'storage-form';
+    var STORAGE_MENU_ID = 'storage-menu';
 
-    var sdcard;
+    var availableStorages;
+    var currentStorage;
     var currentDir;
     var currentFile;
 
+    // Initialize application, executen only once
     function init() {
-        sdcard = navigator.getDeviceStorage('sdcard');
+        availableStorages = navigator.getDeviceStorages('sdcard');
+        currentStorage = availableStorages[0];
 
         var contentList = document.getElementById(CONTENT_LIST_ID);
         contentList.addEventListener('click', _listHandler);
+
+        var menuButton = document.getElementById(MENU_ID);
+        menuButton.addEventListener('click', _menuHandler);
+
+        var returnFalse = function() {
+            return false;
+        };
+
+        document.getElementById(ACTION_FORM_ID).onsubmit = returnFalse;
+        document.getElementById(STORAGE_FORM_ID).onsubmit = returnFalse;
     }
 
+    // Handle main menu (in the top right corner) events
+    function _menuHandler(e) {
+        // Loop through every device storage
+        var menu = $('#' + STORAGE_MENU_ID);
+        menu.text('');
+        for (var i = 0; i < availableStorages.length; i++) {
+            var element =
+                $('<button>', {'data-id': availableStorages[i].storageName, text: availableStorages[i].storageName});
+            menu.append(element);
+        }
+        var cancelElement = $('<button>', {text: 'Cancel'});
+        menu.append(cancelElement);
+        $('#' + STORAGE_FORM_ID).on('click', _selectStorage).show();
+    }
+
+    function _selectStorage(e) {
+        $('#' + STORAGE_FORM_ID).unbind('click').hide();
+        var targetId = e.target.dataset.id;
+        if (targetId) {
+            for (var i = 0; i < availableStorages.length; i++) {
+                if (targetId === availableStorages[i].storageName) {
+                    currentStorage = availableStorages[i];
+                    printDirectoryContent("");
+                    break;
+                }
+            }
+        }
+    }
+
+    // Handler for clicks on file list
     function _listHandler(e) {
         var target = e.target;
 
@@ -29,7 +75,11 @@ var app = (function() {
         if (liElement) {
             var id = liElement.dataset.id;
             if (id) {
-                _selectAction(id);
+                if (liElement.dataset.type === 'folder') {
+                    printDirectoryContent(_getRelativePath(id, '/' + currentStorage.storageName + '/'));
+                } else {
+                    _selectAction(id);
+                }
             }
         }
     }
@@ -46,7 +96,7 @@ var app = (function() {
         if (targetNode === 'button') {
             switch(e.target.id) {
                 case 'open':
-                    alert('Not yet implemented');
+                    _openFile(currentFile);
                     break;
                 case 'share':
                     _shareFile(currentFile);
@@ -60,9 +110,41 @@ var app = (function() {
         }
     }
 
+    function _openFile(fileName) {
+        console.log('Will try to open %s', fileName);
+        var request = currentStorage.get(fileName);
+
+        // TODO: Message for unimplemented formats
+
+        request.onsuccess = function () {
+            var file = this.result;
+
+            var activity = new MozActivity({
+                name: 'open',
+                data: {
+                    type: file.type,
+                    blob: file,
+                    filename: file.name
+                }
+            });
+
+            activity.onsuccess = function() {
+                console.log('File %s successfully opened', file.name);
+            };
+
+            activity.onerror = function() {
+                console.error('Unable to open the file: ', this.error);
+            };
+        };
+
+        request.onerror = function () {
+            console.error('Unable to get the file: ', this.error);
+        };
+    }
+
     function _shareFile(fileName) {
         console.log('Will try to share %s', fileName);
-        var request = sdcard.get(fileName);
+        var request = currentStorage.get(fileName);
 
         request.onsuccess = function () {
             var file = this.result;
@@ -91,11 +173,11 @@ var app = (function() {
 
     function _deleteFile(fileName) {
         console.log('Will try to delete %s', fileName);
-        var request = sdcard.delete(fileName);
+        var request = currentStorage.delete(fileName);
 
         request.onsuccess = function () {
             console.log('File %s successfully deleted', fileName);
-            printDirectory(currentDir);
+            printDirectoryContent(currentDir);
         };
 
         request.onerror = function () {
@@ -105,10 +187,10 @@ var app = (function() {
     }
 
     function getUsedSpace() {
-        var request = sdcard.usedSpace();
+        var request = currentStorage.usedSpace();
 
         request.onsuccess = function () {
-            // The result is expressed in bytes, lets turn it into _MEGABYTEs
+            // The result is expressed in bytes, lets turn it into megabytes
             var size = _printFileSize(request.result);
             var message = '(' + size + ' used)';
 
@@ -122,13 +204,25 @@ var app = (function() {
         };
     }
 
-    function printDirectory(root) {
-
+    function printDirectoryContent(root) {
         var container = $('#' + CONTENT_LIST_ID);
         container.text(''); // NICE: Better way to delete element
 
-        var currentDir = root;
-        var cursor = sdcard.enumerate(currentDir);
+        currentDir = root;
+        var currentPath = '/' + currentStorage.storageName + (root == '' ? '' : '/' + root);
+
+        console.log("Will print folder '%s' from storage '%s'", root, currentStorage.storageName);
+        console.log("Will filter everything out '%s'", currentPath);
+
+        var cursor = currentStorage.enumerate(currentDir);
+
+        var directoriesList = [currentPath];
+
+        if (root !== '') {
+            var parentPath = _getParentFolder(currentPath);
+            console.log("Parent folder is '%s'", parentPath);
+            _printDirectory(container, parentPath, 'Parent folder');
+        }
 
         cursor.onsuccess = function () {
             // Once we found a file we check if there are other results
@@ -136,29 +230,59 @@ var app = (function() {
             // success possibly with the next file as result.
             if (!this.done) {
                 var file = this.result;
+                var relativeFileName = _getRelativePath(file.name, currentPath);
+
                 console.log("Found file %s of type '%s'", file.name, file.type);
 
-                _printDirectoryElement(container, file);
+                // Check if the file is in current folder and print it
+                if (_isInCurrentDirectory(relativeFileName)) {
+                    _printFile(container, file);
+                }
+                // Check if the relative root of the file has been already printed
+                else if (_getRelativeRoot(relativeFileName)) {
+                    //Check if the folder has been already printed
+                    var relativeRootPath = currentPath + '/' + _getRelativeRoot(relativeFileName);
+                    if (directoriesList.indexOf(relativeRootPath) === -1) {
+                        _printDirectory(container, relativeRootPath);
+                        directoriesList.push(relativeRootPath);
+                    }
+                }
 
                 this.continue();
             }
         };
 
         cursor.onerror = function () {
-            $('#' + containerId).text('Error');
+            container.text('Error');
             console.warn('Unable to get sd card cursor: ' + this.error.name);
         };
     }
 
-    function _printDirectoryElement(container, element) {
+    function _printDirectory(container, directoryName, description) {
         var a =
             $('<a>',{href: '#'}).append(
-                    $('<p>', {text: element.name})
+                    $('<p>', {text: directoryName + '/'})
                 ).append(
-                    $('<p>', {text: _printFileDescription(element)})
+                    $('<p>', {text: description || 'Folder'})
                 );
-        var li = $('<li>', {'data-id': element.name});
-        var icon = _printIcon(element);
+        var li = $('<li>', {'data-id': directoryName, 'data-type': 'folder'});
+//        var icon = _printIcon(element);
+//        if (icon) {
+//            li.append(icon);
+//        }
+        li.append(a);
+        container.append(li);
+    }
+
+    function _printFile(container, file) {
+        var a =
+            $('<a>',{href: '#'}).append(
+                    $('<p>', {text: file.name})
+                ).append(
+                    $('<p>', {text: _printFileDescription(file)})
+                );
+        var li = $('<li>', {'data-id': file.name, 'data-type': 'file'});
+        var icon = _printIcon(file);
         if (icon) {
             li.append(icon);
         }
@@ -184,9 +308,11 @@ var app = (function() {
     }
 
     function _printFileType(file) {
+        if (file.type) {
+            return file.type;
+        }
+
         switch(_getFileExtension(file.name)) {
-            case 'txt':
-                return 'Text document';
             case 'doc':
                 return 'Word document';
             case 'pdf':
@@ -212,9 +338,48 @@ var app = (function() {
         return filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
     }
 
+    function _getParentFolder(fullName) {
+        if (fullName == '') {
+            return null;
+        }
+        var lastSlash = fullName.lastIndexOf('/');
+        // Should not happen, would mean a path without slashes
+        if (lastSlash === -1) {
+            return '';
+        }
+        // If the slash is trailing
+        if (lastSlash == fullName.length - 1) {
+            lastSlash = fullName.substring(0, fullName.length - 1).lastIndexOf('/');
+        }
+        return fullName.substring(0, lastSlash);
+    }
+
+    // Precondition: the fullName will always be relative to relativeTo
+    function _getRelativePath(fullName, relativeTo) {
+        var relativePath = fullName.substring(fullName.indexOf(relativeTo) + relativeTo.length);
+        if (relativePath.indexOf('/') === 0) {
+            return relativePath.substring(1);
+        } else {
+            return relativePath;
+        }
+    }
+
+    // Precondition: the relative name cannot start by '/' and must have at least one parent folder
+    function _getRelativeRoot(relativeName) {
+        return relativeName.substring(0, relativeName.indexOf('/'));
+    }
+
+    function _isInCurrentDirectory(relativeName) {
+        return relativeName.lastIndexOf('/') === -1;
+    }
+
+    function _getFolderPath(fullName) {
+        return fullName.substring(0, fullName.lastIndexOf('/'));
+    }
+
     return {
         init: init,
         getUsedSpace: getUsedSpace,
-        printDirectory: printDirectory
+        printDirectory: printDirectoryContent
     }
 })();
