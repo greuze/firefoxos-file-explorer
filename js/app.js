@@ -186,30 +186,14 @@ var app = (function() {
         };
     }
 
-    function getUsedSpace() {
-        var request = currentStorage.usedSpace();
-
-        request.onsuccess = function () {
-            // The result is expressed in bytes, lets turn it into megabytes
-            var size = _printFileSize(request.result);
-            var message = '(' + size + ' used)';
-
-            $('#' + HEADER_INFO_ID).text(message);
-            console.log('The space used is ' + size);
-        };
-
-        request.onerror = function () {
-            $('#' + HEADER_INFO_ID).text('Error');
-            console.warn('Unable to get the used space: ' + this.error.name);
-        };
-    }
-
     function printDirectoryContent(root) {
         var container = $('#' + CONTENT_LIST_ID);
         container.text(''); // NICE: Better way to delete element
 
         currentDir = root;
         var currentPath = '/' + currentStorage.storageName + (root == '' ? '' : '/' + root);
+
+        $('#' + HEADER_INFO_ID).text(currentPath + '/');
 
         console.log("Will print folder '%s' from storage '%s'", root, currentStorage.storageName);
         console.log("Will filter everything out '%s'", currentPath);
@@ -233,7 +217,7 @@ var app = (function() {
                 var file = this.result;
                 var relativeFileName = _getRelativePath(file.name, currentPath);
 
-                console.log("Found file %s of type '%s'", file.name, file.type);
+//                console.log("Found file %s of type '%s'", file.name, file.type);
 
                 // Check if the file is in current folder and print it
                 if (_isInCurrentDirectory(relativeFileName)) {
@@ -433,7 +417,6 @@ var app = (function() {
 
     return {
         init: init,
-        getUsedSpace: getUsedSpace,
         printDirectory: printDirectoryContent
     }
 })();
