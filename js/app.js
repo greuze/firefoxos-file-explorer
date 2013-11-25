@@ -216,13 +216,14 @@ var app = (function() {
 
         var cursor = currentStorage.enumerate(currentDir);
 
-        var directoriesList = [currentPath];
-
         if (root !== '') {
             var parentPath = _getParentFolder(currentPath);
             console.log("Parent folder is '%s'", parentPath);
             _printDirectory(container, parentPath, 'Parent folder');
         }
+
+        var folderList = [currentPath];
+        var fileList = [];
 
         cursor.onsuccess = function () {
             // Once we found a file we check if there are other results
@@ -236,19 +237,39 @@ var app = (function() {
 
                 // Check if the file is in current folder and print it
                 if (_isInCurrentDirectory(relativeFileName)) {
-                    _printFile(container, file);
+                    fileList.push({name: file.name, type: file.type, size: file.size});
                 }
                 // Check if the relative root of the file has been already printed
                 else if (_getRelativeRoot(relativeFileName)) {
                     //Check if the folder has been already printed
                     var relativeRootPath = currentPath + '/' + _getRelativeRoot(relativeFileName);
-                    if (directoriesList.indexOf(relativeRootPath) === -1) {
-                        _printDirectory(container, relativeRootPath);
-                        directoriesList.push(relativeRootPath);
+                    if (folderList.indexOf(relativeRootPath) === -1) {
+                        folderList.push(relativeRootPath);
                     }
                 }
 
                 this.continue();
+            }
+            // Executed after every result have been processed, then print them
+            if (this.done) {
+                // Sort folders case insensitive
+                folderList.sort(function (a, b) {
+                    return a.toLowerCase().localeCompare(b.toLowerCase());
+                });
+                // Sort files case insensitive
+                fileList.sort(function (a, b) {
+                    return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+                });
+
+                folderList.forEach(function(folderName, i) {
+                    // Skip the first element (current dir)
+                    if (i !== 0) {
+                        _printDirectory(container, folderName);
+                    }
+                });
+                fileList.forEach(function(file) {
+                    _printFile(container, file);
+                });
             }
         };
 
@@ -266,10 +287,10 @@ var app = (function() {
                     $('<p>', {text: description || 'Folder'})
                 );
         var li = $('<li>', {'data-id': directoryName, 'data-type': 'folder'});
-//        var icon = _printIcon(element);
-//        if (icon) {
-//            li.append(icon);
-//        }
+        var icon = $('<aside>', {class: 'pack-end'}).append(
+            $('<img>', {alt: 'placeholder', src: 'img/folder.png'})
+        );
+        li.append(icon);
         li.append(a);
         container.append(li);
     }
@@ -292,15 +313,48 @@ var app = (function() {
 
     function _printIcon(file) {
         var fileExtension = _getFileExtension(file.name);
+        var iconName;
         switch (fileExtension) {
+            case 'aac':
+            case 'avi':
+            case 'bmp':
+            case 'css':
             case 'doc':
+            case 'exe':
+            case 'flv':
+            case 'gif':
+            case 'html':
+            case 'jpg':
+            case 'mp3':
+            case 'mp4':
+            case 'mpg':
+            case 'odt':
             case 'pdf':
-                return $('<aside>', {class: 'pack-end'}).append(
-                    $('<img>', {alt: 'placeholder', src: 'img/' + fileExtension + '_16.png'})
-                );
+            case 'png':
+            case 'ppt':
+            case 'rar':
+            case 'tga':
+            case 'tiff':
+            case 'txt':
+            case 'wav':
+            case 'xls':
+            case 'xml':
+            case 'zip':
+                iconName = fileExtension;
+                break;
+            case 'docx':
+                iconName = 'doc';
+                break;
+            case 'm4a':
+                iconName = 'mp4';
+                break;
             default:
-                return false;
+                iconName = '_blank';
         }
+
+        return $('<aside>', {class: 'pack-end'}).append(
+            $('<img>', {alt: 'placeholder', src: 'img/' + iconName + '.png'})
+        );
     }
 
     function _printFileDescription(file) {
