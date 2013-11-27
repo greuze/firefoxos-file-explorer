@@ -1,6 +1,6 @@
 {
   "name": "SD Explorer",
-  "version": "1.0.1"
+  "version": "1.0.1",
   "description": "This app allows you to check your sd card!",
   "launch_path": "/index.html",
   "developer": {
