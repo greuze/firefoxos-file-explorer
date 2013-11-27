@@ -21,14 +21,23 @@ var app = (function() {
 
     // Initialize application, executen only once
     function init() {
-        availableStorages = navigator.getDeviceStorages('sdcard');
-        currentStorage = availableStorages[0];
+        var menuButton = document.getElementById(MENU_ID);
+
+        // Available from Firefox OS 1.1
+        if (navigator.getDeviceStorages && false) {
+            availableStorages = navigator.getDeviceStorages('sdcard');
+            currentStorage = availableStorages[0];
+
+            menuButton.addEventListener('click', _menuHandler);
+        } else {
+            currentStorage = navigator.getDeviceStorage('sdcard');
+            availableStorages = [currentStorage];
+
+            menuButton.parentNode.removeChild(menuButton);
+        }
 
         var contentList = document.getElementById(CONTENT_LIST_ID);
         contentList.addEventListener('click', _listHandler);
-
-        var menuButton = document.getElementById(MENU_ID);
-        menuButton.addEventListener('click', _menuHandler);
 
         var returnFalse = function() {
             return false;
