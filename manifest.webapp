@@ -1,10 +1,11 @@
 {
   "name": "SD Explorer",
+  "version": "1.0.1",
   "description": "This app allows you to check your sd card!",
   "launch_path": "/index.html",
   "developer": {
     "name": "Ivan Lopez",
-    "url": "https://github.com/ils219"
+    "url": "https://github.com/greuze"
   },
   "permissions": {
     "device-storage:sdcard": {
