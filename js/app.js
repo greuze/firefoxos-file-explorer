@@ -24,7 +24,7 @@ var app = (function() {
         var menuButton = document.getElementById(MENU_ID);
 
         // Available from Firefox OS 1.1
-        if (navigator.getDeviceStorages && false) {
+        if (navigator.getDeviceStorages) {
             availableStorages = navigator.getDeviceStorages('sdcard');
             currentStorage = availableStorages[0];
 
