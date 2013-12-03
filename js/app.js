@@ -212,7 +212,7 @@ var app = (function() {
         if (root !== '') {
             var parentPath = _getParentFolder(currentPath);
             console.log("Parent folder is '%s'", parentPath);
-            _printDirectory(container, parentPath, 'Parent folder');
+            _printDirectory(container, parentPath, '..', 'Parent folder', 'parent.png');
         }
 
         var folderList = [currentPath];
@@ -254,10 +254,10 @@ var app = (function() {
                     return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
                 });
 
-                folderList.forEach(function(folderName, i) {
+                folderList.forEach(function(folderPath, i) {
                     // Skip the first element (current dir)
                     if (i !== 0) {
-                        _printDirectory(container, folderName);
+                        _printDirectory(container, folderPath, _removeFullPath(folderPath));
                     }
                 });
                 fileList.forEach(function(file) {
@@ -272,16 +272,16 @@ var app = (function() {
         };
     }
 
-    function _printDirectory(container, directoryName, description) {
+    function _printDirectory(container, directoryPath, directoryName, description, iconName) {
         var a =
             $('<a>',{href: '#'}).append(
-                    $('<p>', {text: directoryName + '/'})
+                    $('<p>', {text: directoryName || (directoryPath + '/')})
                 ).append(
                     $('<p>', {text: description || 'Folder'})
                 );
-        var li = $('<li>', {'data-id': directoryName, 'data-type': 'folder'});
+        var li = $('<li>', {'data-id': directoryPath, 'data-type': 'folder'});
         var icon = $('<aside>', {class: 'pack-end'}).append(
-            $('<img>', {alt: 'placeholder', src: 'img/folder.png'})
+            $('<img>', {alt: 'placeholder', src: 'img/' + (iconName || 'folder.png')})
         );
         li.append(icon);
         li.append(a);
@@ -420,8 +420,8 @@ var app = (function() {
         return relativeName.lastIndexOf('/') === -1;
     }
 
-    function _getFolderPath(fullName) {
-        return fullName.substring(0, fullName.lastIndexOf('/'));
+    function _removeFullPath(fullName) {
+        return fullName.substring(fullName.lastIndexOf('/') + 1);
     }
 
     return {
