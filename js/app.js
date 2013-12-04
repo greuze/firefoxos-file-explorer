@@ -207,8 +207,6 @@ var app = (function() {
         console.log("Will print folder '%s' from storage '%s'", root, currentStorage.storageName);
         console.log("Will filter everything out '%s'", currentPath);
 
-        var cursor = currentStorage.enumerate(currentDir);
-
         if (root !== '') {
             var parentPath = _getParentFolder(currentPath);
             console.log("Parent folder is '%s'", parentPath);
@@ -218,15 +216,17 @@ var app = (function() {
         var folderList = [currentPath];
         var fileList = [];
 
+        var cursor = currentStorage.enumerate(currentDir);
+
         cursor.onsuccess = function () {
             // Once we found a file we check if there are other results
             // Then we move to the next result, which calls the cursor
             // success possibly with the next file as result.
-            if (!this.done) {
+            if (this.result) {
                 var file = this.result;
                 var relativeFileName = _getRelativePath(file.name, currentPath);
 
-//                console.log("Found file %s of type '%s'", file.name, file.type);
+                console.log("Found file %s of type '%s'", file.name, file.type);
 
                 // Check if the file is in current folder and print it
                 if (_isInCurrentDirectory(relativeFileName)) {
@@ -244,7 +244,7 @@ var app = (function() {
                 this.continue();
             }
             // Executed after every result have been processed, then print them
-            if (this.done) {
+            else {
                 // Sort folders case insensitive
                 folderList.sort(function (a, b) {
                     return a.toLowerCase().localeCompare(b.toLowerCase());
@@ -261,7 +261,7 @@ var app = (function() {
                     }
                 });
                 fileList.forEach(function(file) {
-                    _printFile(container, file);
+                    _printFile(container, file, _removeFullPath(file.name));
                 });
             }
         };
@@ -288,10 +288,10 @@ var app = (function() {
         container.append(li);
     }
 
-    function _printFile(container, file) {
+    function _printFile(container, file, fileName) {
         var a =
             $('<a>',{href: '#'}).append(
-                    $('<p>', {text: file.name})
+                    $('<p>', {text: fileName || file.name})
                 ).append(
                     $('<p>', {text: _printFileDescription(file)})
                 );
