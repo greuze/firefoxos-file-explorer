@@ -28,6 +28,8 @@
   font-weight: normal;
   color: #ff4E00;
   text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* List items */
