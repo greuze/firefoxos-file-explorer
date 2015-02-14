@@ -1,6 +1,6 @@
 {
   "name": "SD Explorer",
-  "version": "1.0.4",
+  "version": "1.1",
   "description": "This app allows you to check your sd card!",
   "launch_path": "/index.html",
   "developer": {
@@ -14,11 +14,10 @@
     }
   },
   "icons": {
-    "32": "/icons/icon_32.png",
     "60": "/icons/icon_60.png",
-    "90": "/icons/icon_90.png",
+    "84": "/icons/icon_84.png",
     "128": "/icons/icon_128.png",
-    "256": "/icons/icon_256.png"
+    "284": "/icons/icon_284.png"
   },
   "default_locale": "en",
   "type": "privileged"
